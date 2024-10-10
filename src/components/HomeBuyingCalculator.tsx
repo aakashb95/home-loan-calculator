@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
@@ -37,23 +37,7 @@ export const HomeBuyingCalculator: React.FC = () => {
 
   const [showEmiAlert, setShowEmiAlert] = useState<boolean>(false);
 
-  useEffect(() => {
-    calculateAffordability();
-  }, [yourSalary, spouseSalary, currentRent, loanTerm, interestRate, downPaymentPercentage, emiPercentage]);
-
-  useEffect(() => {
-    calculateRequiredIncome();
-  }, [desiredHomePrice, loanTerm, interestRate, downPaymentPercentage, emiPercentage]);
-
-  useEffect(() => {
-    if (emiPercentage > 50) {
-      setShowEmiAlert(true);
-    } else {
-      setShowEmiAlert(false);
-    }
-  }, [emiPercentage]);
-
-  const calculateAffordability = (): void => {
+  const calculateAffordability = useCallback((): void => {
     const totalMonthlySalary = parseFloat(yourSalary) + parseFloat(spouseSalary);
     const loanTermYears = parseFloat(loanTerm);
     const annualInterestRate = parseFloat(interestRate) / 100;
@@ -73,9 +57,9 @@ export const HomeBuyingCalculator: React.FC = () => {
 
     const totalPaid = calculatedEMI * numberOfPayments + (totalAffordablePrice * (downPaymentPercentage / 100));
     setTotalAmountPaid(totalPaid);
-  };
+  }, [yourSalary, spouseSalary, loanTerm, interestRate, emiPercentage, downPaymentPercentage]);
 
-  const calculateRequiredIncome = (): void => {
+  const calculateRequiredIncome = useCallback((): void => {
     const homePriceValue = parseFloat(desiredHomePrice);
     const loanTermYears = parseFloat(loanTerm);
     const annualInterestRate = parseFloat(interestRate) / 100;
@@ -93,7 +77,23 @@ export const HomeBuyingCalculator: React.FC = () => {
 
     const totalPaid = monthlyEMI * numberOfPayments + (homePriceValue * (downPaymentPercentage / 100));
     setTotalAmountPaidDesired(totalPaid);
-  };
+  }, [desiredHomePrice, loanTerm, interestRate, downPaymentPercentage, emiPercentage]);
+
+  useEffect(() => {
+    calculateAffordability();
+  }, [yourSalary, spouseSalary, currentRent, loanTerm, interestRate, downPaymentPercentage, emiPercentage, calculateAffordability]);
+
+  useEffect(() => {
+    calculateRequiredIncome();
+  }, [desiredHomePrice, loanTerm, interestRate, downPaymentPercentage, emiPercentage, calculateRequiredIncome]);
+
+  useEffect(() => {
+    if (emiPercentage > 50) {
+      setShowEmiAlert(true);
+    } else {
+      setShowEmiAlert(false);
+    }
+  }, [emiPercentage]);
 
   const Explainer: React.FC = () => (
     <Alert className="mt-4">
@@ -149,7 +149,7 @@ export const HomeBuyingCalculator: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Spouse's Monthly Salary (₹)</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Spouse&apos;s Monthly Salary (₹)</label>
                   <Input
                     type="number"
                     value={spouseSalary}
